@@ -1,0 +1,18 @@
+{
+	"name": "youtube-scraper",
+	"version": "1.0.0",
+	"description": "A youtube scraper that scrapes channel names from youtube searches and fetches data about them.",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"start": "node index.js keyword.json",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"crawlee": "^3.5.3",
+		"playwright": "^1.37.1"
+	}
+}
