@@ -1,16 +1,21 @@
 // @ts-check
+const { parseSubscribers } = require('./utils.js');
 
-import { MIN_SUBSCRIBER_COUNT } from './const.mjs';
-import { parseSubscribers } from './utils.mjs';
-
-export async function crawlYoutubeSearch(page, enqueueLinks) {
+/**
+ * Crawls the youtube search page for a specific keyword and scrapes out
+ * all the available list of channels as per the provided options
+ * @param {import('playwright').Page} page
+ * @param {{minSubs: number, maxSubs: number, maxChannelsPerKeyword: number}} options
+ * @returns {Promise}
+ */
+async function crawlYoutubeSearch(page, options) {
 	await page.waitForLoadState('networkidle');
 
 	// Setting the functions in the browser context
 	await page.exposeFunction(parseSubscribers.name, parseSubscribers);
 
 	let data = [];
-	while (true) {
+	while (data.length <= options.maxChannelsPerKeyword) {
 		const scrapedData = [];
 
 		const noResults = await page.$(
@@ -22,19 +27,24 @@ export async function crawlYoutubeSearch(page, enqueueLinks) {
 		for (const channelElement of channelElements) {
 			const channelData = await page.evaluate(async ($channel) => {
 				const name = $channel.querySelector('yt-formatted-string[id="text"]')?.textContent;
-				const href = $channel.querySelector('span[id="subscribers"]')?.textContent;
-				const subs = $channel.querySelector('span[id="video-count"]')?.textContent;
+				const href = $channel.querySelector('a[id="main-link"]')?.getAttribute('href');
 
-				// Since parseSubscribers returns a promise in the browser context, use await
-				let subscribers = await parseSubscribers(subs);
+				let subscribers = 0;
+				const subSourceA = $channel.querySelector('span[id="video-count"]')?.textContent;
+				const subSourceB = $channel.querySelector('span[id="subscribers"]')?.textContent;
+
+				if (subSourceA?.split(' ')[1] === 'subscribers')
+					subscribers = await parseSubscribers(subSourceA);
+				else if (subSourceB?.split(' ')[1] === 'subscribers')
+					subscribers = await parseSubscribers(subSourceB);
 
 				return { name, href, subscribers };
 			}, channelElement);
 
-			// Log channel data to console
-			console.log(channelData);
-
-			if (channelData.subscribers > MIN_SUBSCRIBER_COUNT) {
+			if (
+				channelData.subscribers >= options.minSubs &&
+				channelData.subscribers <= options.maxSubs
+			) {
 				scrapedData.push(channelData);
 			}
 		}
@@ -58,5 +68,15 @@ export async function crawlYoutubeSearch(page, enqueueLinks) {
 		data.push(...scrapedData);
 	}
 
-	return data;
+	// Splice the data to make its length equal to maxChannelsPerKeyword
+	const splicedData =
+		data.length > options.maxChannelsPerKeyword
+			? data.splice(0, options.maxChannelsPerKeyword)
+			: data;
+
+	return splicedData;
 }
+
+module.exports = {
+	crawlYoutubeSearch,
+};

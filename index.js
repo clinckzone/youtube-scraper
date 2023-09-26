@@ -1,69 +1,71 @@
 // @ts-check
+const { fork } = require('child_process');
+const express = require('express');
+const app = express();
 
-import * as fs from 'fs/promises';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { crawlYoutubeSearch } from './search.js';
-import { crawlYoutubeChannel } from './channel.js';
-import { Dataset, PlaywrightCrawler } from 'crawlee';
+const PORT = 3000;
+const MAX_SUBSCRIBERS = 100000000;
+const MIN_SUBSCRIBERS = 1000;
+const MAX_CHANNELS_PER_KEYWORD = 100;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+/**
+ * @typedef {Object} ScraperMessage
+ * @property {'SEARCH' | 'CHANNEL' | 'COMPLETED'} state
+ * @property {any} [data]
+ */
+app.get('/search', (req, res) => {
+	let keywords = req.query.keywords;
+	if (typeof keywords === 'string') {
+		keywords = JSON.parse(keywords);
+	}
 
-// Get all the search urls from the specified file
-const file = process.argv[2];
-const filePath = join(__dirname, file);
-const fileContent = await fs.readFile(filePath, 'utf-8');
-const requestArr = JSON.parse(fileContent).map((keyword) => {
-	return {
-		url: `https://www.youtube.com/results?search_query=${encodeURIComponent(
-			keyword
-		)}&sp=EgIQAg%253D%253D`,
-		label: 'search-url',
-	};
-});
+	const minSubs = Number(req.query.minSub ?? MIN_SUBSCRIBERS);
+	const maxSubs = Number(req.query.maxSub ?? MAX_SUBSCRIBERS);
+	const maxChannelsPerKeyword = Number(
+		req.query.maxChannelsPerKeyword ?? MAX_CHANNELS_PER_KEYWORD
+	);
 
-const crawler = new PlaywrightCrawler({
-	launchContext: {
-		launchOptions: {
-			headless: true,
-		},
-	},
+	const scraper = fork('./crawler.js');
 
-	maxRequestsPerCrawl: 1000,
-	requestHandlerTimeoutSecs: 300,
-
-	async requestHandler({ request, page, enqueueLinks, log }) {
-		log.info(`Processing ${request.url}...`);
-
-		if (request.label === 'search-url') {
-			const channels = await crawlYoutubeSearch(page, enqueueLinks);
-			const channelLinks = channels.map(
-				(channel) => `https://www.youtube.com/${channel.href}/about`
-			);
-
-			// Enqueue links for scraping channel data
-			await enqueueLinks({
-				urls: channelLinks,
-				label: 'channel-url',
-			});
-		} else if (request.label === 'channel-url') {
-			const channel = await crawlYoutubeChannel(page);
-
-			// Log channel data
-			console.log(channel);
-
-			// Push channel data to Dataset
-			await Dataset.pushData(channel);
+	// Listen for messages from the child process
+	scraper.on(
+		'message',
+		/**
+		 * @param {ScraperMessage} data
+		 */
+		(data) => {
+			if (data.state === 'SEARCH' || data.state === 'CHANNEL') {
+				res.write(JSON.stringify(data));
+			} else if (data.state === 'COMPLETED') {
+				res.end();
+			}
 		}
-	},
+	);
 
-	failedRequestHandler({ request, log }) {
-		log.info(`Request ${request.url} failed too many times.`);
-	},
+	scraper.on('error', (err) => {
+		console.error('Scraper error:', err);
+		res.status(500).end('Internal Server Error');
+	});
+
+	scraper.on('exit', (code) => {
+		if (code !== 0) {
+			console.error(`Scraper process exited with code ${code}`);
+			res.status(500).end('Internal Server Error');
+		}
+	});
+
+	// Send the necessary parameters to the child process
+	scraper.send({
+		keywords,
+		minSubs,
+		maxSubs,
+		maxChannelsPerKeyword,
+	});
+
+	// Handle client disconnection
+	res.on('close', () => {
+		scraper.kill(); // Kill the child process if the client disconnects
+	});
 });
 
-await crawler.addRequests(requestArr);
-await crawler.run();
-
-console.log('Crawler finished.');
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
