@@ -38,7 +38,7 @@ async function youtubeCrawler(message) {
 	const crawler = new PlaywrightCrawler({
 		launchContext: {
 			launchOptions: {
-				headless: false,
+				headless: true,
 			},
 		},
 		maxRequestsPerCrawl: 1000,
