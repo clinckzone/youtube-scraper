@@ -1,7 +1,7 @@
 {
-	"name": "youtube-scraper",
+	"name": "youtube-scraper-backend",
 	"version": "1.0.0",
-	"description": "A youtube scraper that scrapes channel names from youtube searches and fetches data about them.",
+	"description": "A REST API that implements a youtube scraper to scrape channel names from youtube searches and fetches data about them from their about pages.",
 	"main": "index.js",
 	"scripts": {
 		"start": "node index.js",
