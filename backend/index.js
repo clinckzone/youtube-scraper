@@ -1,7 +1,10 @@
 // @ts-check
 const { fork } = require('child_process');
 const express = require('express');
+const cors = require('cors');
+
 const app = express();
+app.use(cors());
 
 const PORT = 3000;
 const MAX_SUBSCRIBERS = 100000000;
@@ -16,7 +19,7 @@ const MAX_CHANNELS_PER_KEYWORD = 100;
 app.get('/search', (req, res) => {
 	let keywords = req.query.keywords;
 	if (typeof keywords === 'string') {
-		keywords = JSON.parse(keywords);
+		keywords = keywords.split(', ');
 	}
 
 	const minSubs = Number(req.query.minSub ?? MIN_SUBSCRIBERS);
