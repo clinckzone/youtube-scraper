@@ -10,7 +10,7 @@ const STATE = {
 	CHANNEL: 'CHANNEL', // Channel data is being scraped
 	DOWNLOAD: 'DOWNLOAD', // Download the scraped data as a JSON file
 };
-const defaultData = { channelNames: [], channelData: [] };
+const defaultData = { channelData: [] };
 const LOADER_LENGTH = 300;
 
 function App() {
@@ -61,15 +61,7 @@ function App() {
 
 				if (data.state == STATE.SEARCH) {
 					totalChannelsToScrape += data.data.length;
-					setScrapedData((prevData) => {
-						if (prevData) {
-							const newData = JSON.parse(JSON.stringify(prevData));
-							newData.channelNames.push(data.data);
-							return newData;
-						} else {
-							return defaultData;
-						}
-					});
+					console.log(data.data);
 				} else if (data.state == STATE.CHANNEL) {
 					channelsScraped++;
 					const loadPercentage = (channelsScraped / totalChannelsToScrape) * 100;
