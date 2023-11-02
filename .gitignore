@@ -1,4 +1,5 @@
 backend/node_modules
+backend/storage
 backend/dist
 
 frontend/node_modules
