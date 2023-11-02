@@ -1,28 +1,26 @@
-// @ts-check
-const { PlaywrightCrawler } = require('crawlee');
-const { crawlYoutubeSearch } = require('./search.js');
-const { crawlYoutubeChannel } = require('./channel.js');
-const { getChannelAboutPageUrl, getSearchUrl } = require('./utils.js');
+import { CRAWLER_STATE } from './utils.js';
+import { PlaywrightCrawler } from 'crawlee';
+import { SearchOptionsTypes, crawlYoutubeSearch } from './search.js';
+import { crawlYoutubeChannel } from './channel.js';
+import { getChannelAboutPageUrl, getSearchUrl } from './utils';
 
-const CRAWLER_STATE = {
-	SEARCH: 'SEARCH',
-	CHANNEL: 'CHANNEL',
-	COMPLETED: 'COMPLETED',
+// Crawls the youtube search page to scrape channel names and extracts
+// information about each channel sequencially from channel's about page.
+
+export type ParamTypes = {
+	keywords: string[];
+	minSubs: number;
+	maxSubs: number;
+	maxChannelsPerKeyword: number;
 };
 
-/**
- * Crawls the youtube search page to scrape channel names and extracts
- * information about each channel sequencially from channel's about page.
- * @param {{keywords: string[], minSubs: number, maxSubs: number, maxChannelsPerKeyword}} message
- * @returns
- */
-async function youtubeCrawler(message) {
-	const keywords = message.keywords;
-	const minSubs = message.minSubs;
-	const maxSubs = message.maxSubs;
-	const maxChannelsPerKeyword = message.maxChannelsPerKeyword;
+async function youtubeCrawler(params: ParamTypes) {
+	const keywords = params.keywords;
+	const minSubs = params.minSubs;
+	const maxSubs = params.maxSubs;
+	const maxChannelsPerKeyword = params.maxChannelsPerKeyword;
 
-	const options = {
+	const options: SearchOptionsTypes = {
 		minSubs,
 		maxSubs,
 		maxChannelsPerKeyword,
@@ -50,7 +48,9 @@ async function youtubeCrawler(message) {
 			if (request.label === 'search-url') {
 				const result = await crawlYoutubeSearch(page, options);
 
-				const channelUrls = result.map((channel) => getChannelAboutPageUrl(channel.href));
+				const channelUrls = result.map((channel) =>
+					getChannelAboutPageUrl(channel.href!)
+				);
 
 				await enqueueLinks({
 					urls: channelUrls,

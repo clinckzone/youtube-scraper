@@ -1,21 +1,22 @@
-// @ts-check
-const { fork } = require('child_process');
-const express = require('express');
-const cors = require('cors');
+import cors from 'cors';
+import express from 'express';
+import { fork } from 'child_process';
+import {
+	CRAWLER_STATE,
+	MAX_CHANNELS_PER_KEYWORD,
+	MAX_SUBSCRIBERS,
+	MIN_SUBSCRIBERS,
+	PORT,
+} from './utils';
+
+type ProcessMessageType = {
+	state: CRAWLER_STATE;
+	data: any;
+};
 
 const app = express();
 app.use(cors());
 
-const PORT = 3000;
-const MAX_SUBSCRIBERS = 100000000;
-const MIN_SUBSCRIBERS = 1000;
-const MAX_CHANNELS_PER_KEYWORD = 100;
-
-/**
- * @typedef {Object} ScraperMessage
- * @property {'SEARCH' | 'CHANNEL' | 'COMPLETED'} state
- * @property {any} [data]
- */
 app.get('/search', (req, res) => {
 	let keywords = req.query.keywords;
 	if (typeof keywords === 'string') {
@@ -31,19 +32,16 @@ app.get('/search', (req, res) => {
 	const scraper = fork('./crawler.js');
 
 	// Listen for messages from the child process
-	scraper.on(
-		'message',
-		/**
-		 * @param {ScraperMessage} data
-		 */
-		(data) => {
-			if (data.state === 'SEARCH' || data.state === 'CHANNEL') {
-				res.write(JSON.stringify(data));
-			} else if (data.state === 'COMPLETED') {
-				res.end();
-			}
+	scraper.on('message', (data: ProcessMessageType) => {
+		if (
+			data.state === CRAWLER_STATE.SEARCH ||
+			data.state === CRAWLER_STATE.CHANNEL
+		) {
+			res.write(JSON.stringify(data));
+		} else if (data.state === CRAWLER_STATE.COMPLETED) {
+			res.end();
 		}
-	);
+	});
 
 	scraper.on('error', (err) => {
 		console.error('Scraper error:', err);

@@ -1,13 +1,14 @@
-// @ts-check
-const { convertStringToNumber, parseSubscribers, getBannerUrl } = require('./utils.js');
+import { Page } from 'playwright';
+import {
+	convertStringToNumber,
+	parseSubscribers,
+	getBannerUrl,
+} from './utils.js';
 
-/**
- * Crawls the about page of a specific youtube channel to
- * scrape all kinds of data publicly available data
- * @param {import('playwright').Page} page
- * @returns {Promise}
- */
-async function crawlYoutubeChannel(page) {
+// Crawls the about page of a specific youtube channel to
+// scrape all kinds of data publicly available data
+
+export async function crawlYoutubeChannel(page: Page) {
 	await page.waitForLoadState('networkidle');
 
 	// Setting the functions in the browser context
@@ -15,62 +16,63 @@ async function crawlYoutubeChannel(page) {
 	await page.exposeFunction(convertStringToNumber.name, convertStringToNumber);
 	await page.exposeFunction(getBannerUrl.name, getBannerUrl);
 
-	// @ts-ignore
-	const name = await page.$eval('yt-formatted-string[id="text"]', (el) => el.innerText);
+	const name = await page.$eval(
+		'yt-formatted-string[id="text"]',
+		(el) => (el as HTMLElement).innerText
+	);
 
 	const thumbnailUrl = await page.$eval('#img', (el) => el.getAttribute('src'));
 
-	const bannerUrl = await page.$eval('#header > ytd-c4-tabbed-header-renderer', (el) => {
-		const str = el.getAttribute('style');
-		if (str) return getBannerUrl(str);
-		return undefined;
-	});
+	const bannerUrl = await page.$eval(
+		'#header > ytd-c4-tabbed-header-renderer',
+		(el) => {
+			const str = el.getAttribute('style');
+			if (str) return getBannerUrl(str);
+			return undefined;
+		}
+	);
 
 	const handle = await page.$eval(
 		'yt-formatted-string[id="channel-handle"]',
-		// @ts-ignore
-		(el) => el.innerText
+		(el) => (el as HTMLElement).innerText
 	);
 
-	const subscribers = await page.$eval('yt-formatted-string[id="subscriber-count"]', (el) =>
-		// @ts-ignore
-		parseSubscribers(el.innerText)
+	const subscribers = await page.$eval(
+		'yt-formatted-string[id="subscriber-count"]',
+		(el) => parseSubscribers((el as HTMLElement).innerText)
 	);
 
 	const channelPronouns = await page.$eval(
 		'yt-formatted-string[id="channel-pronouns"]',
-		// @ts-ignore
-		(el) => el.innerText
+		(el) => (el as HTMLElement).innerText
 	);
 
 	const description = await page.$eval(
 		'yt-formatted-string[id="description"]',
-		(el) => el.innerHTML
+		(el) => (el as HTMLElement).innerHTML
 	);
 
-	const videoCount = await page.$eval('yt-formatted-string[id="videos-count"]', (el) =>
-		// @ts-ignore
-		parseSubscribers(el.innerText)
+	const videoCount = await page.$eval(
+		'yt-formatted-string[id="videos-count"]',
+		(el) => parseSubscribers((el as HTMLElement).innerText)
 	);
 
 	const location = await page.$eval(
 		'#details-container > table > tbody > tr:nth-child(2) > td:nth-child(2) > yt-formatted-string',
-		// @ts-ignore
-		(el) => el.innerText
+		(el) => (el as HTMLElement).innerText
 	);
 
 	const joined = await page.$eval(
 		'#right-column > yt-formatted-string:nth-child(2) > span:nth-child(2)',
-		// @ts-ignore
-		(el) => el.innerText
+		(el) => (el as HTMLElement).innerText
 	);
 
-	const views = await page.$eval('#right-column > yt-formatted-string:nth-child(3)', (el) =>
-		// @ts-ignore
-		convertStringToNumber(el.innerText)
+	const views = await page.$eval(
+		'#right-column > yt-formatted-string:nth-child(3)',
+		(el) => convertStringToNumber((el as HTMLElement).innerText)
 	);
 
-	const linksEntries = [];
+	const linksEntries: [string, string][] = [];
 	const linkElements = await page.$$(
 		'#link-list-container > yt-channel-external-link-view-model'
 	);
@@ -80,11 +82,14 @@ async function crawlYoutubeChannel(page) {
 		const headerSelector = '.yt-channel-external-link-view-model-wiz__title';
 		const urlSelector = '.yt-channel-external-link-view-model-wiz__link > a';
 
-		// @ts-ignore
-		const header = await linkElem.$eval(headerSelector, (el) => el.innerText);
-
-		// @ts-ignore
-		const url = await linkElem.$eval(urlSelector, (el) => el.innerText);
+		const header: string = await linkElem.$eval(
+			headerSelector,
+			(el) => (el as HTMLElement).innerText
+		);
+		const url: string = await linkElem.$eval(
+			urlSelector,
+			(el) => (el as HTMLElement).innerText
+		);
 
 		linksEntries.push([header, url]);
 	}
@@ -109,5 +114,3 @@ async function crawlYoutubeChannel(page) {
 
 	return data;
 }
-
-module.exports = { crawlYoutubeChannel };

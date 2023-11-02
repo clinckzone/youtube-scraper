@@ -1,14 +1,16 @@
-// @ts-check
-const { parseSubscribers } = require('./utils.js');
+import { Page } from 'playwright';
+import { parseSubscribers } from './utils.js';
+import { ParamTypes } from './crawler.js';
 
-/**
- * Crawls the youtube search page for a specific keyword and scrapes out
- * all the available list of channels as per the provided options
- * @param {import('playwright').Page} page
- * @param {{minSubs: number, maxSubs: number, maxChannelsPerKeyword: number}} options
- * @returns {Promise}
- */
-async function crawlYoutubeSearch(page, options) {
+// Crawls the youtube search page for a specific keyword and scrapes out
+// all the available list of channels as per the provided options
+
+export type SearchOptionsTypes = Omit<ParamTypes, 'keywords'>;
+
+export async function crawlYoutubeSearch(
+	page: Page,
+	options: SearchOptionsTypes
+) {
 	await page.waitForLoadState('networkidle');
 
 	// Setting the functions in the browser context
@@ -23,15 +25,25 @@ async function crawlYoutubeSearch(page, options) {
 		);
 		if (noResults) break;
 
-		const channelElements = await page.$$('ytd-item-section-renderer ytd-channel-renderer');
+		const channelElements = await page.$$(
+			'ytd-item-section-renderer ytd-channel-renderer'
+		);
 		for (const channelElement of channelElements) {
 			const channelData = await page.evaluate(async ($channel) => {
-				const name = $channel.querySelector('yt-formatted-string[id="text"]')?.textContent;
-				const href = $channel.querySelector('a[id="main-link"]')?.getAttribute('href');
+				const name = $channel.querySelector(
+					'yt-formatted-string[id="text"]'
+				)?.textContent;
+				const href = $channel
+					.querySelector('a[id="main-link"]')
+					?.getAttribute('href');
 
 				let subscribers = 0;
-				const subSourceA = $channel.querySelector('span[id="video-count"]')?.textContent;
-				const subSourceB = $channel.querySelector('span[id="subscribers"]')?.textContent;
+				const subSourceA = $channel.querySelector(
+					'span[id="video-count"]'
+				)?.textContent;
+				const subSourceB = $channel.querySelector(
+					'span[id="subscribers"]'
+				)?.textContent;
 
 				if (subSourceA?.split(' ')[1] === 'subscribers')
 					subscribers = await parseSubscribers(subSourceA);
@@ -76,7 +88,3 @@ async function crawlYoutubeSearch(page, options) {
 
 	return splicedData;
 }
-
-module.exports = {
-	crawlYoutubeSearch,
-};
