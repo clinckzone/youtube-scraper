@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
+const wholeNumber = /^\d+$/;
 export const searchInput = z.object({
   keywords: z.union([z.string().array(), z.string()]),
-  minSubs: z.number().min(0).default(1000),
-  maxSubs: z.number().min(1).default(1000000),
-  maxChannelsPerKeyword: z.number().min(1).default(100),
+  minSubs: z.string().regex(wholeNumber).default('0'),
+  maxSubs: z.string().regex(wholeNumber).default('1'),
+  maxChannelsPerKeyword: z.string().regex(wholeNumber).default('1'),
 });
 
 export type SearchInputType = z.infer<typeof searchInput>;

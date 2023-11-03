@@ -1,6 +1,6 @@
 {
   "name": "@clinckzone/common",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "description": "Common package for youtube scarper",
   "main": "dist/index.js",
   "scripts": {
