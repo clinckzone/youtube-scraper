@@ -1,13 +1,8 @@
 import cors from 'cors';
 import express from 'express';
 import { fork } from 'child_process';
-import {
-  CRAWLER_STATE,
-  MAX_CHANNELS_PER_KEYWORD,
-  MAX_SUBSCRIBERS,
-  MIN_SUBSCRIBERS,
-  PORT,
-} from './utils';
+import { CRAWLER_STATE, PORT } from './utils';
+import { searchInput } from '@clinckzone/common';
 
 type ProcessMessageType = {
   state: CRAWLER_STATE;
@@ -18,15 +13,23 @@ const app = express();
 app.use(cors());
 
 app.get('/search', (req, res) => {
-  let keywords = req.query.keywords;
+  const parsedSearchParams = searchInput.safeParse(req.query);
+  if (!parsedSearchParams.success) {
+    return res.status(403).json({
+      message: 'Incorrect input search params',
+      error: parsedSearchParams.error,
+    });
+  }
+
+  let keywords = parsedSearchParams.data.keywords;
   if (typeof keywords === 'string') {
     keywords = keywords.split(', ');
   }
 
-  const minSubs = Number(req.query.minSub ?? MIN_SUBSCRIBERS);
-  const maxSubs = Number(req.query.maxSub ?? MAX_SUBSCRIBERS);
+  const minSubs = Number(parsedSearchParams.data.minSubs);
+  const maxSubs = Number(parsedSearchParams.data.maxSubs);
   const maxChannelsPerKeyword = Number(
-    req.query.maxChannelsPerKeyword ?? MAX_CHANNELS_PER_KEYWORD
+    parsedSearchParams.data.maxChannelsPerKeyword
   );
 
   const scraper = fork(__dirname + '/crawler.js');

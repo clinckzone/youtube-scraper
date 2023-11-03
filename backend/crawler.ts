@@ -1,8 +1,8 @@
 import { CRAWLER_STATE } from './utils';
 import { PlaywrightCrawler } from 'crawlee';
-import { SearchOptionsTypes, crawlYoutubeSearch } from './search';
 import { crawlYoutubeChannel } from './channel.js';
 import { getChannelAboutPageUrl, getSearchUrl } from './utils';
+import { SearchOptionsTypes, crawlYoutubeSearch } from './search';
 
 // Crawls the youtube search page to scrape channel names and extracts
 // information about each channel sequencially from channel's about page.

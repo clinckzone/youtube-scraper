@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
-import { parseSubscribers } from './utils';
 import { ParamTypes } from './crawler';
+import { parseSubscribers } from './utils';
 
 // Crawls the youtube search page for a specific keyword and scrapes out
 // all the available list of channels as per the provided options

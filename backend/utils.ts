@@ -1,15 +1,9 @@
-// Utility crawler state
+export const PORT = 3000;
 export enum CRAWLER_STATE {
   SEARCH,
   CHANNEL,
   COMPLETED,
 }
-
-// Default values
-export const PORT = 3000;
-export const MAX_SUBSCRIBERS = 100000000;
-export const MIN_SUBSCRIBERS = 1000;
-export const MAX_CHANNELS_PER_KEYWORD = 100;
 
 // Returns the youtube search url for a particular keyword with filter set to 'channel'
 export function getSearchUrl(keyword: string): string {

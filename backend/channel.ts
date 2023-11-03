@@ -1,9 +1,9 @@
-import { Page } from 'playwright';
 import {
-  convertStringToNumber,
-  parseSubscribers,
   getBannerUrl,
+  parseSubscribers,
+  convertStringToNumber,
 } from './utils.js';
+import { Page } from 'playwright';
 
 // Crawls the about page of a specific youtube channel to
 // scrape all kinds of data publicly available data
