@@ -1,5 +1,6 @@
 import './css/App.css';
 import InputScreen from './components/InputScreen';
+import { SearchInputType } from '@clinckzone/common';
 import { useCallback, useRef, useState } from 'react';
 import DownloadButton from './components/DownloadButton';
 import { ChannelLoader, SearchLoader } from './components/Loaders';
@@ -30,15 +31,17 @@ function App() {
 
     setState(STATE.SEARCH);
 
-    const queryParams = {
+    const queryParams: SearchInputType = {
       keywords: keywordsRef.current?.value ?? '',
-      minSub: minSubRef.current?.value ?? '',
-      maxSub: maxSubRef.current?.value ?? '',
+      minSubs: minSubRef.current?.value ?? '',
+      maxSubs: maxSubRef.current?.value ?? '',
       maxChannelsPerKeyword: maxChannelsPerKeywordRef.current?.value ?? '',
     };
 
     // Convert queryParams to a URLSearchParams object for easy query string formatting
-    const queryString = new URLSearchParams(queryParams).toString();
+    const queryString = new URLSearchParams(
+      queryParams as Record<string, string>
+    ).toString();
 
     try {
       const response = await fetch(
