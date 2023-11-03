@@ -1,0 +1,19 @@
+{
+  "name": "@clinckzone/common",
+  "version": "1.0.4",
+  "description": "Common package for youtube scarper",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/node": "^20.8.10",
+    "zod": "^3.22.4"
+  }
+}

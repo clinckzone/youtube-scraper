@@ -2,5 +2,8 @@ backend/node_modules
 backend/storage
 backend/dist
 
+common/dist
+common/node_modules
+
 frontend/node_modules
 frontend/dist
